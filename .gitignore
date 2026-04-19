@@ -1,0 +1,24 @@
+# Environment — never commit secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+.venv/
+
+# Django
+staticfiles/
+*.log
+db.sqlite3
+
+# VS Code
+.vscode/
+
+# Mac junk
+__MACOSX/
+.DS_Store
+
+# Migrations (optional — remove this line if you want to track migrations)
+# */migrations/

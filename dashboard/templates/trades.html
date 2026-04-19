@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Trades{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-list-ul"></i> Trade History</h4>
+
+<!-- Filters -->
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-2">
+    <input type="text" class="form-control form-control-sm" name="symbol"
+           placeholder="Symbol" value="{{ filters.symbol }}">
+  </div>
+  <div class="col-md-2">
+    <select class="form-select form-select-sm" name="strategy">
+      <option value="">All Strategies</option>
+      {% for code, label in strategy_choices %}
+        <option value="{{ code }}" {% if filters.strategy == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select form-select-sm" name="side">
+      <option value="">All Sides</option>
+      {% for code, label in side_choices %}
+        <option value="{{ code }}" {% if filters.side == code %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <input type="date" class="form-control form-control-sm" name="date_from"
+           value="{{ filters.date_from }}">
+  </div>
+  <div class="col-md-2">
+    <input type="date" class="form-control form-control-sm" name="date_to"
+           value="{{ filters.date_to }}">
+  </div>
+  <div class="col-md-1">
+    <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+  </div>
+  <div class="col-md-1">
+    <a href="{% url 'trades' %}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+  </div>
+</form>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th><th>Symbol</th><th>Strategy</th><th>Side</th>
+            <th>Entry</th><th>Exit</th><th>Qty</th><th>P&L</th>
+            <th>Status</th><th>Opened</th><th>Closed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pos in positions %}
+          <tr>
+            <td class="text-muted small">{{ pos.id }}</td>
+            <td><strong>{{ pos.symbol.symbol }}</strong></td>
+            <td>{{ pos.get_strategy_display }}</td>
+            <td>
+              <span class="badge {% if pos.side == 'LONG' %}bg-success{% else %}bg-danger{% endif %}">
+                {{ pos.side }}
+              </span>
+            </td>
+            <td>₹{{ pos.entry_price }}</td>
+            <td>{% if pos.exit_price %}₹{{ pos.exit_price }}{% else %}—{% endif %}</td>
+            <td>{{ pos.quantity }}</td>
+            <td class="{% if pos.pnl and pos.pnl >= 0 %}text-success{% elif pos.pnl %}text-danger{% endif %}">
+              {% if pos.pnl %}
+                {% if pos.pnl >= 0 %}+{% endif %}₹{{ pos.pnl|floatformat:2 }}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <span class="badge
+                {% if pos.status == 'OPEN' %}bg-primary
+                {% elif pos.status == 'TARGET_HIT' %}bg-success
+                {% elif pos.status == 'SL_HIT' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ pos.status }}
+              </span>
+            </td>
+            <td class="small text-muted">{{ pos.opened_at|date:"d-M H:i" }}</td>
+            <td class="small text-muted">
+              {% if pos.closed_at %}{{ pos.closed_at|date:"d-M H:i" }}{% else %}—{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="11" class="text-center text-muted py-4">No trades found</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

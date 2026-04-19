@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-bar-chart-fill"></i> P&L Reports</h4>
+
+<div class="row g-3 mb-3">
+
+  <!-- Equity Curve -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Equity Curve (Cumulative Net P&L)</div>
+      <div class="card-body">
+        <canvas id="equityChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Win Rate Doughnut -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Win Rate</div>
+      <div class="card-body d-flex justify-content-center align-items-center">
+        <canvas id="winRateChart" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="row g-3">
+
+  <!-- Daily P&L Bar -->
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Daily P&L</div>
+      <div class="card-body">
+        <canvas id="dailyPnlChart" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy Comparison -->
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Strategy P&L (Last 30 Days)</div>
+      <div class="card-body">
+        <canvas id="strategyChart" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const equityLabels = {{ equity_labels|safe }};
+const equityData   = {{ equity_data|safe }};
+const dailyLabels  = {{ daily_labels|safe }};
+const dailyPnl     = {{ daily_pnl|safe }};
+const totalWins    = {{ total_wins }};
+const totalLosses  = {{ total_losses }};
+const strategyLabels = {{ strategy_labels|safe }};
+const strategyPnl    = {{ strategy_pnl|safe }};
+
+initReportCharts(
+  equityLabels, equityData,
+  dailyLabels, dailyPnl,
+  totalWins, totalLosses,
+  strategyLabels, strategyPnl
+);
+</script>
+{% endblock %}

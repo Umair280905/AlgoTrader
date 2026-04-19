@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AlgoTrader{% endblock %} — NSE Intraday</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<!-- Top navbar -->
+<nav class="navbar navbar-dark bg-dark px-3">
+  <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
+    <i class="bi bi-graph-up-arrow text-success"></i> AlgoTrader
+  </a>
+  <div class="d-flex align-items-center gap-3">
+    <span id="live-pnl" class="fw-bold fs-5 text-white">P&L: ₹0.00</span>
+    <span id="paper-badge" class="badge bg-warning text-dark">PAPER</span>
+    <span class="text-muted small">{{ request.user }}</span>
+  </div>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+
+    <!-- Sidebar -->
+    <nav class="col-md-2 d-none d-md-block sidebar py-3">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+             href="{% url 'dashboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'trades' %}active{% endif %}"
+             href="{% url 'trades' %}">
+            <i class="bi bi-list-ul"></i> Trades
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+             href="{% url 'reports' %}">
+            <i class="bi bi-bar-chart-fill"></i> Reports
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'journal' %}active{% endif %}"
+             href="{% url 'journal' %}">
+            <i class="bi bi-journal-text"></i> Journal
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}"
+             href="{% url 'settings' %}">
+            <i class="bi bi-gear-fill"></i> Settings
+          </a>
+        </li>
+        <li class="nav-item mt-3">
+          <a class="nav-link text-muted" href="/admin/">
+            <i class="bi bi-shield-lock"></i> Admin
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Main content -->
+    <main class="col-md-10 ms-sm-auto px-4 py-3">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+{% load static %}
+<script src="{% static 'js/charts.js' %}"></script>
+
+<script>
+// Auto-refresh dashboard data every 10 seconds
+function refreshDashboardData() {
+  // Update live P&L
+  fetch('/api/pnl/', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(r => r.json())
+    .then(data => {
+      const pnl = data.net_pnl || 0;
+      const el = document.getElementById('live-pnl');
+      if (el) {
+        el.textContent = `P&L: ${pnl >= 0 ? '+' : ''}₹${pnl.toFixed(2)}`;
+        el.className = `fw-bold fs-5 ${pnl >= 0 ? 'text-success' : 'text-danger'}`;
+      }
+      if (data.trading_halted) {
+        document.getElementById('paper-badge').textContent = 'HALTED';
+        document.getElementById('paper-badge').className = 'badge bg-danger';
+      }
+    })
+    .catch(() => {});
+
+  // Update positions table if element exists
+  const posTable = document.getElementById('positions-table');
+  if (posTable) {
+    fetch('/api/positions/', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) {
+          posTable.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No open positions</td></tr>';
+          return;
+        }
+        posTable.innerHTML = data.map(p => `
+          <tr>
+            <td><strong>${p.symbol_name}</strong></td>
+            <td>${p.strategy}</td>
+            <td><span class="badge ${p.side === 'LONG' ? 'bg-success' : 'bg-danger'}">${p.side}</span></td>
+            <td>₹${p.entry_price}</td>
+            <td>${p.quantity}</td>
+            <td>₹${p.stop_loss}</td>
+            <td>₹${p.target}</td>
+            <td>${p.status}</td>
+          </tr>`).join('');
+      })
+      .catch(() => {});
+  }
+
+  // Update signals feed if element exists
+  const signalsFeed = document.getElementById('signals-feed');
+  if (signalsFeed) {
+    fetch('/api/signals/', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) {
+          signalsFeed.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No signals yet</td></tr>';
+          return;
+        }
+        signalsFeed.innerHTML = data.map(s => `
+          <tr>
+            <td>${s.symbol_name}</td>
+            <td>${s.strategy}</td>
+            <td><span class="badge ${s.signal_type === 'BUY' ? 'bg-success' : 'bg-danger'}">${s.signal_type}</span></td>
+            <td>₹${s.entry_price}</td>
+            <td>₹${s.stop_loss}</td>
+            <td>${s.acted_on ? '✅' : '⏳'}</td>
+          </tr>`).join('');
+      })
+      .catch(() => {});
+  }
+}
+
+setInterval(refreshDashboardData, 10000);
+refreshDashboardData();
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

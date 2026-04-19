@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Journal{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-journal-text"></i> Trading Journal</h4>
+
+<div class="row g-3">
+  {% for td in trading_days %}
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white d-flex justify-content-between">
+        <span class="fw-bold">{{ td.date|date:"D, d M Y" }}</span>
+        <span class="{% if td.net_pnl >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+          {% if td.net_pnl >= 0 %}+{% endif %}₹{{ td.net_pnl|floatformat:2 }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row text-center mb-2">
+          <div class="col-4">
+            <div class="text-muted small">Trades</div>
+            <div class="fw-bold">{{ td.total_trades }}</div>
+          </div>
+          <div class="col-4">
+            <div class="text-muted small">Wins</div>
+            <div class="fw-bold text-success">{{ td.winning_trades }}</div>
+          </div>
+          <div class="col-4">
+            <div class="text-muted small">Losses</div>
+            <div class="fw-bold text-danger">{{ td.losing_trades }}</div>
+          </div>
+        </div>
+        {% if td.trading_halted %}
+          <div class="alert alert-danger py-1 px-2 small mb-2">Trading halted this day</div>
+        {% endif %}
+        <form method="post" action="{% url 'journal' %}">
+          {% csrf_token %}
+          <input type="hidden" name="date" value="{{ td.date }}">
+          <textarea class="form-control form-control-sm mb-2" name="notes" rows="3"
+                    placeholder="Add journal notes…">{{ td.notes }}</textarea>
+          <button type="submit" class="btn btn-sm btn-outline-primary">Save Notes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12 text-center text-muted py-5">
+    No trading days recorded yet. Start trading to see your journal.
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

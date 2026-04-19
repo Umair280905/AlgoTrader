@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-speedometer2"></i> Live Dashboard</h4>
+  <div>
+    {% if paper_trading %}
+      <span class="badge bg-warning text-dark fs-6">PAPER TRADING — Phase {{ phase }}</span>
+    {% else %}
+      <span class="badge bg-danger fs-6">LIVE TRADING — Phase {{ phase }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-muted small">Today's Net P&L</div>
+        <div class="fs-3 fw-bold {% if trading_day.net_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+          {% if trading_day.net_pnl >= 0 %}+{% endif %}₹{{ trading_day.net_pnl|floatformat:2 }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-muted small">Total Trades</div>
+        <div class="fs-3 fw-bold">{{ trading_day.total_trades }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-muted small">W / L</div>
+        <div class="fs-3 fw-bold">
+          <span class="text-success">{{ trading_day.winning_trades }}</span>
+          / <span class="text-danger">{{ trading_day.losing_trades }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="text-muted small">Open Positions</div>
+        <div class="fs-3 fw-bold text-primary">{{ open_positions.count }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if trading_day.trading_halted %}
+<div class="alert alert-danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <strong>TRADING HALTED</strong> — Daily loss limit reached. No new orders will be placed today.
+</div>
+{% endif %}
+
+<!-- Open Positions -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-activity"></i> Open Positions
+    <span class="badge bg-primary ms-2">{{ open_positions.count }}</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Symbol</th><th>Strategy</th><th>Side</th>
+            <th>Entry</th><th>Qty</th><th>SL</th><th>Target</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="positions-table">
+          {% for pos in open_positions %}
+          <tr>
+            <td><strong>{{ pos.symbol.symbol }}</strong></td>
+            <td>{{ pos.get_strategy_display }}</td>
+            <td>
+              <span class="badge {% if pos.side == 'LONG' %}bg-success{% else %}bg-danger{% endif %}">
+                {{ pos.side }}
+              </span>
+            </td>
+            <td>₹{{ pos.entry_price }}</td>
+            <td>{{ pos.quantity }}</td>
+            <td>₹{{ pos.stop_loss }}</td>
+            <td>₹{{ pos.target }}</td>
+            <td>{{ pos.status }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center text-muted py-3">No open positions</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Signals -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white fw-bold">
+    <i class="bi bi-lightning-charge-fill text-warning"></i> Recent Signals
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Symbol</th><th>Strategy</th><th>Type</th>
+            <th>Entry</th><th>SL</th><th>Acted</th>
+          </tr>
+        </thead>
+        <tbody id="signals-feed">
+          {% for sig in recent_signals %}
+          <tr>
+            <td>{{ sig.symbol.symbol }}</td>
+            <td>{{ sig.get_strategy_display }}</td>
+            <td>
+              <span class="badge {% if sig.signal_type == 'BUY' %}bg-success{% else %}bg-danger{% endif %}">
+                {{ sig.signal_type }}
+              </span>
+            </td>
+            <td>₹{{ sig.entry_price }}</td>
+            <td>₹{{ sig.stop_loss }}</td>
+            <td>{% if sig.acted_on %}✅{% else %}⏳{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-3">No signals yet today</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source .venv/bin/activate)",
+      "Bash(python -m py_compile config/settings.py config/celery.py config/urls.py config/wsgi.py broker/exceptions.py broker/mirage_client.py broker/paper_engine.py strategies/base.py strategies/ema_crossover.py strategies/orb.py strategies/vwap_bounce.py strategies/registry.py trading/models.py trading/admin.py trading/risk.py trading/engine.py trading/tasks.py trading/serializers.py trading/views.py trading/urls.py trading/management/commands/start_trading.py trading/management/commands/backtest.py notifications/telegram.py reports/daily.py reports/weekly.py reports/exporters.py)"
+    ]
+  }
+}

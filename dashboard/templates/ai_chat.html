@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}AI Chat{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="card bg-dark border-secondary mb-3">
+        <div class="card-header border-secondary d-flex align-items-center gap-2">
+          <span style="color:#7c6ff7; font-size:1.2rem;">&#9884;</span>
+          <strong style="color:#ffffff;">Trader Chat</strong>
+          <small class="text-muted ms-2">Ask anything about your trades</small>
+        </div>
+
+        <div class="card-body" id="chat-window"
+             style="height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:12px;">
+          {% for msg in messages %}
+            {% if msg.role == 'user' %}
+              <div class="d-flex justify-content-end">
+                <div class="rounded px-3 py-2"
+                     style="background:#4f46e5; color:#ffffff; border:1px solid #6366f1; max-width:75%; font-size:0.9rem; line-height:1.5;">
+                  {{ msg.content }}
+                </div>
+              </div>
+            {% else %}
+              <div class="d-flex justify-content-start">
+                <div class="rounded px-3 py-2"
+                     style="background:#1e3a5f; color:#ffffff; border:1px solid #2563eb; max-width:75%; font-size:0.9rem; line-height:1.5;">
+                  {{ msg.content }}
+                </div>
+              </div>
+            {% endif %}
+          {% empty %}
+            <div class="text-center mt-4" style="font-size:0.9rem; color:#aaaaaa;">
+              Ask me anything about your trades.<br>
+              <small>Try: "What was my best strategy this week?" or "Why did it trade RELIANCE today?"</small>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="card-footer border-secondary">
+          <div class="input-group">
+            <input type="text" id="chat-input"
+                   class="form-control border-secondary"
+                   style="background:#1a1a2e; color:#ffffff;"
+                   placeholder="Ask about your trades..." autocomplete="off">
+            <button class="btn btn-primary" id="send-btn">Send</button>
+          </div>
+          <div class="mt-2 d-flex gap-2 flex-wrap align-items-center">
+            <small style="color:#aaaaaa;">Quick questions:</small>
+            <button class="btn btn-sm btn-outline-light quick-q"
+                    style="font-size:0.75rem; padding:2px 8px;">What is my P&L today?</button>
+            <button class="btn btn-sm btn-outline-light quick-q"
+                    style="font-size:0.75rem; padding:2px 8px;">Which strategy is performing best?</button>
+            <button class="btn btn-sm btn-outline-light quick-q"
+                    style="font-size:0.75rem; padding:2px 8px;">Show me recent losses</button>
+            <button class="btn btn-sm btn-outline-light quick-q"
+                    style="font-size:0.75rem; padding:2px 8px;">How many trades this week?</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const chatWindow = document.getElementById('chat-window');
+const input = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+
+function scrollBottom() {
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+scrollBottom();
+
+function addMessage(role, content) {
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = 'd-flex ' + (isUser ? 'justify-content-end' : 'justify-content-start');
+  div.innerHTML = `<div class="rounded px-3 py-2"
+    style="background:${isUser ? '#4f46e5' : '#1e3a5f'};
+           color:#ffffff;
+           border:1px solid ${isUser ? '#6366f1' : '#2563eb'};
+           max-width:75%; font-size:0.9rem; line-height:1.5;">
+    ${content}
+  </div>`;
+  chatWindow.appendChild(div);
+  scrollBottom();
+}
+
+async function sendMessage(text) {
+  if (!text.trim()) return;
+  addMessage('user', text);
+  input.value = '';
+  sendBtn.disabled = true;
+  sendBtn.textContent = '...';
+
+  try {
+    const resp = await fetch('/ai/chat/send/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ message: text }),
+    });
+    const data = await resp.json();
+    addMessage('assistant', data.reply);
+  } catch (e) {
+    addMessage('assistant', 'Error reaching the AI agent. Please try again.');
+  }
+
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Send';
+}
+
+sendBtn.addEventListener('click', () => sendMessage(input.value));
+input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(input.value); });
+
+document.querySelectorAll('.quick-q').forEach(btn => {
+  btn.addEventListener('click', () => sendMessage(btn.textContent.trim()));
+});
+</script>
+{% endblock %}

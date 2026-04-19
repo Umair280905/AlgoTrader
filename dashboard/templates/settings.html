@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-gear-fill"></i> Settings</h4>
+
+<div class="row g-3">
+
+  <!-- Risk Settings (read-only — edit .env to change) -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold">Risk Settings</div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <tbody>
+            {% for key, val in settings.items %}
+            <tr>
+              <td class="text-muted small">{{ key }}</td>
+              <td class="fw-bold">
+                {% if val == True %}<span class="badge bg-warning text-dark">ON</span>
+                {% elif val == False %}<span class="badge bg-secondary">OFF</span>
+                {% else %}{{ val }}{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <p class="text-muted small mt-2 mb-0">
+          <i class="bi bi-info-circle"></i>
+          Edit <code>.env</code> to change these values, then restart Django.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Watchlist -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+        <span>Watchlist</span>
+      </div>
+      <div class="card-body">
+        <!-- Add symbol form -->
+        <form method="post" class="row g-2 mb-3">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_symbol">
+          <div class="col-md-3">
+            <input type="text" class="form-control form-control-sm" name="symbol"
+                   placeholder="NSE Symbol (e.g. RELIANCE)" required>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select form-select-sm" name="instrument_type">
+              <option value="EQUITY">Equity</option>
+              <option value="INDEX_FUTURES">Index Futures</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <input type="number" class="form-control form-control-sm" name="lot_size"
+                   value="1" min="1" placeholder="Lot size">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100">Add Symbol</button>
+          </div>
+        </form>
+
+        <!-- Watchlist table -->
+        <table class="table table-hover table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Symbol</th><th>Type</th><th>Lot Size</th>
+              <th>Max Qty</th><th>Active</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in watchlist %}
+            <tr>
+              <td><strong>{{ item.symbol }}</strong></td>
+              <td>{{ item.instrument_type }}</td>
+              <td>{{ item.lot_size }}</td>
+              <td>{{ item.max_quantity }}</td>
+              <td>
+                <span class="badge {% if item.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if item.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </td>
+              <td>
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle_symbol">
+                  <input type="hidden" name="symbol_id" value="{{ item.id }}">
+                  <button type="submit" class="btn btn-sm btn-outline-{% if item.is_active %}danger{% else %}success{% endif %}">
+                    {% if item.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-3">
+              No symbols in watchlist. Add one above.
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
