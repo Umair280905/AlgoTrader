@@ -226,6 +226,10 @@ class TradingEngine:
         from trading.tasks import run_journal_agent
         run_journal_agent.delay(position.id)
 
+        # # Trigger Journal Agent asynchronously
+        # from trading.tasks import run_journal_agent
+        # run_journal_agent.delay(position.id)
+
     def _update_trading_day(self, pnl: Decimal, charges: Decimal) -> None:
         """Upsert TradingDay record with latest P&L."""
         today = timezone.now().date()
