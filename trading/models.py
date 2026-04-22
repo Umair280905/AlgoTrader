@@ -301,6 +301,3 @@ class AIChatMessage(models.Model):
 
     class Meta:
         ordering = ['created_at']
-
-
-     
