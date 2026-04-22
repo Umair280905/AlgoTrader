@@ -87,10 +87,13 @@ CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localho
 CELERY_TIMEZONE = 'Asia/Kolkata'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# ── Mirage Broker API ─────────────────────────────────────────────────────────
-MIRAGE_BASE_URL = config('MIRAGE_BASE_URL', default='https://api.miragetrading.in/v1')
-MIRAGE_API_KEY = config('MIRAGE_API_KEY', default='')
-MIRAGE_API_SECRET = config('MIRAGE_API_SECRET', default='')
+# ── Kotak Neo Broker API ──────────────────────────────────────────────────────
+KOTAK_CONSUMER_KEY    = config('KOTAK_CONSUMER_KEY', default='')
+KOTAK_CONSUMER_SECRET = config('KOTAK_CONSUMER_SECRET', default='')
+KOTAK_NEO_FIN_KEY     = config('KOTAK_NEO_FIN_KEY', default='')
+KOTAK_ACCESS_TOKEN    = config('KOTAK_ACCESS_TOKEN', default='')
+KOTAK_MOBILE          = config('KOTAK_MOBILE', default='')
+KOTAK_PASSWORD        = config('KOTAK_PASSWORD', default='')
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')

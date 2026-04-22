@@ -19,12 +19,12 @@ risk_controller = RiskController()
 
 
 def get_broker_client():
-    """Factory: returns PaperEngine or MirageClient based on settings."""
+    """Factory: returns PaperEngine or KotakNeoClient based on settings."""
     if settings.PAPER_TRADING:
         from broker.paper_engine import PaperEngine
         return PaperEngine()
-    from broker.mirage_client import MirageClient
-    return MirageClient()
+    from broker.kotak_neo_client import KotakNeoClient
+    return KotakNeoClient()
 
 
 class TradingEngine:
