@@ -52,15 +52,16 @@ class AIOrchestrator:
                     signal.symbol.symbol,
                     market_analysis.get('reason')
                 )
-                AISignalScore.objects.create(
+                AISignalScore.objects.update_or_create(
                     signal=signal,
-                    confidence_score=0,
-                    market_sentiment=market_analysis.get('sentiment', 'NEGATIVE'),
-                    sentiment_reason=market_analysis.get('reason', ''),
-                    avoid_symbol=True,
-                    passed_gate=False,
+                    defaults={
+                    'confidence_score': 0,
+                    'market_sentiment': market_analysis.get('sentiment', 'NEGATIVE'),
+                    'sentiment_reason': market_analysis.get('reason', ''),
+                    'avoid_symbol': True,
+                    'passed_gate': False,
+                    }
                 )
-                return False, 0
 
             # Step 2: Signal Confidence — score the setup
             recent_win_rate = self.confidence_agent.get_recent_win_rate(signal.strategy)
@@ -70,16 +71,18 @@ class AIOrchestrator:
             passed = confidence_score >= MIN_CONFIDENCE
 
             # Step 3: Save the score to DB
-            AISignalScore.objects.create(
+            AISignalScore.objects.update_or_create(
                 signal=signal,
-                confidence_score=confidence_score,
-                market_sentiment=market_analysis.get('sentiment', 'NEUTRAL'),
-                sentiment_reason=market_analysis.get('reason', ''),
-                avoid_symbol=False,
-                timeframe_aligned=score_data.get('timeframe_aligned', False),
-                volume_above_avg=score_data.get('volume_above_avg', False),
-                strategy_recent_winrate=recent_win_rate,
-                passed_gate=passed,
+                defaults={
+                'confidence_score': confidence_score,
+                'market_sentiment': market_analysis.get('sentiment', 'NEUTRAL'),
+                'sentiment_reason': market_analysis.get('reason', ''),
+                'avoid_symbol': False,
+                'timeframe_aligned': score_data.get('timeframe_aligned', False),
+                'volume_above_avg': score_data.get('volume_above_avg', False),
+                'strategy_recent_winrate': recent_win_rate,
+                'passed_gate': passed,
+                }
             )
 
             logger.info(

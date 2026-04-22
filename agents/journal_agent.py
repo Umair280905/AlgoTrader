@@ -4,6 +4,9 @@ Journal Agent — auto-writes a trade rationale after every position closes.
 Saves to AIJournalEntry and updates TradingDay.notes.
 """
 import logging
+from turtle import position
+
+from trading.models import AIJournalEntry
 
 from .base import BaseAgent
 
@@ -33,8 +36,11 @@ Respond ONLY in JSON (no markdown):
         from trading.models import AIJournalEntry
 
         # Don't re-write if entry already exists
-        if hasattr(position, 'ai_journal'):
-            return {}
+        # if hasattr(position, 'ai_journal'):
+        #     return {}
+        from trading.models import AIJournalEntry
+        if AIJournalEntry.objects.filter(position=position).exists():
+            AIJournalEntry.objects.filter(position=position).delete()
 
         pnl = float(position.pnl) if position.pnl else 0
         outcome = "WIN" if pnl > 0 else "LOSS"
