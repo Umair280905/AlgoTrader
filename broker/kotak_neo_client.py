@@ -1,7 +1,7 @@
 """
-Kotak Neo API adapter — drop-in replacement for MirageClient.
+Kotak Neo API v2 adapter — drop-in replacement for MirageClient.
 
-Authentication: Kotak Neo requires an OTP-based login once per trading day.
+Authentication: Kotak Neo requires a TOTP-based login once per trading day.
 Run the management command to authenticate and save the token:
 
     python manage.py kotak_login
@@ -9,7 +9,7 @@ Run the management command to authenticate and save the token:
 Then set KOTAK_ACCESS_TOKEN in your .env file (or the command does it for you).
 
 Install dependency:
-    pip install neo-api-client
+    pip install git+https://github.com/Kotak-Neo/Kotak-neo-api-v2.git@v2.0.1
 """
 import logging
 
@@ -40,7 +40,8 @@ class KotakNeoClient:
             from neo_api_client import NeoAPI
         except ImportError as exc:
             raise ImportError(
-                "neo-api-client is not installed. Run: pip install neo-api-client"
+                "neo-api-client v2 is not installed. Run: "
+                "pip install git+https://github.com/Kotak-Neo/Kotak-neo-api-v2.git@v2.0.1"
             ) from exc
 
         if not settings.KOTAK_ACCESS_TOKEN:
@@ -51,7 +52,6 @@ class KotakNeoClient:
 
         self._neo = NeoAPI(
             consumer_key=settings.KOTAK_CONSUMER_KEY,
-            consumer_secret=settings.KOTAK_CONSUMER_SECRET,
             environment='prod',
             access_token=settings.KOTAK_ACCESS_TOKEN,
             neo_fin_key=settings.KOTAK_NEO_FIN_KEY,
@@ -121,39 +121,11 @@ class KotakNeoClient:
         }
 
     def get_candles(self, symbol: str, timeframe: str, from_dt, to_dt) -> list:
-        """Returns list of OHLCV dicts sorted by timestamp ascending."""
-        token, exchange = self._get_instrument_token(symbol)
-        kotak_exchange = 'NSE' if exchange == 'nse_cm' else 'NFO'
-        candle_type = _TIMEFRAME_MAP.get(timeframe, '1')
-
-        resp = self._neo.intradaycandles(
-            exchange=kotak_exchange,
-            token=token,
-            to_date=to_dt.strftime('%Y-%m-%d %H:%M:%S'),
-            from_date=from_dt.strftime('%Y-%m-%d %H:%M:%S'),
-            type=candle_type,
+        """Historical/intraday candles are not available in Kotak Neo API v2."""
+        raise NotImplementedError(
+            "Kotak Neo API v2 does not expose a historical/intraday candles endpoint. "
+            "Use an alternative data source (e.g. NSE CSV, Zerodha Historical API)."
         )
-        raw = self._unwrap(resp)
-        candles_raw = raw if isinstance(raw, list) else (raw.get('candles') or raw.get('data') or [])
-
-        candles = []
-        for c in candles_raw:
-            if isinstance(c, list):
-                # [timestamp, open, high, low, close, volume]
-                candles.append({
-                    'timestamp': c[0],
-                    'open': float(c[1]), 'high': float(c[2]),
-                    'low': float(c[3]), 'close': float(c[4]),
-                    'volume': int(c[5]) if len(c) > 5 else 0,
-                })
-            else:
-                candles.append({
-                    'timestamp': c.get('timestamp') or c.get('time'),
-                    'open': float(c.get('open', 0)), 'high': float(c.get('high', 0)),
-                    'low': float(c.get('low', 0)),   'close': float(c.get('close', 0)),
-                    'volume': int(c.get('volume', 0)),
-                })
-        return sorted(candles, key=lambda x: x['timestamp'])
 
     # ── Account ────────────────────────────────────────────────────────────────
 
