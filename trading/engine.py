@@ -1,7 +1,8 @@
 """
 TradingEngine — orchestrates signal → risk check → order placement → position tracking.
 
-get_broker_client() returns PaperEngine or MirageClient based on settings.PAPER_TRADING.
+get_broker_client() returns YahooFinanceClient (paper) or KotakNeoClient (live)
+based on settings.PAPER_TRADING.
 """
 import logging
 from decimal import Decimal
@@ -19,10 +20,14 @@ risk_controller = RiskController()
 
 
 def get_broker_client():
-    """Factory: returns PaperEngine or KotakNeoClient based on settings."""
+    """Factory: returns the appropriate broker client based on settings.
+
+    PAPER_TRADING=True  → YahooFinanceClient (real market data + paper orders)
+    PAPER_TRADING=False → KotakNeoClient (live broker)
+    """
     if settings.PAPER_TRADING:
-        from broker.paper_engine import PaperEngine
-        return PaperEngine()
+        from broker.yahoo_finance_client import YahooFinanceClient
+        return YahooFinanceClient()
     from broker.kotak_neo_client import KotakNeoClient
     return KotakNeoClient()
 

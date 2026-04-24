@@ -44,10 +44,10 @@ NSE_HOLIDAYS = NSE_HOLIDAYS_2025 | NSE_HOLIDAYS_2026
 
 class RiskController:
     def approve(self, signal: Signal) -> Tuple[bool, str]:
-        """
-        Returns (approved: bool, reason: str).
-        Runs all risk checks in order. Fails fast on first rejection.
-        """
+        # """
+        # Returns (approved: bool, reason: str).
+        # Runs all risk checks in order. Fails fast on first rejection.
+        # """
         checks = [
             self._check_market_hours,
             self._check_trading_halted,

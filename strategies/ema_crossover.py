@@ -11,7 +11,6 @@ import logging
 from typing import Optional
 
 import pandas as pd
-import pandas_ta as ta
 
 from .base import BaseStrategy
 
@@ -28,8 +27,8 @@ class EMACrossoverStrategy(BaseStrategy):
             return None
 
         df = candles_df.copy()
-        df['ema9'] = ta.ema(df['close'], length=9)
-        df['ema21'] = ta.ema(df['close'], length=21)
+        df['ema9']  = df['close'].ewm(span=9,  adjust=False).mean()
+        df['ema21'] = df['close'].ewm(span=21, adjust=False).mean()
 
         if df['ema9'].isna().iloc[-1] or df['ema21'].isna().iloc[-1]:
             return None
